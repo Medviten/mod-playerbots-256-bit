@@ -4704,7 +4704,7 @@ void PlayerbotFactory::InitGlyphs(bool increment)
         if (proto->Class != ITEM_CLASS_GLYPH)
             continue;
 
-        if ((proto->AllowableClass & bot->getClassMask()) == 0 || (proto->AllowableRace & bot->getRaceMask()) == 0)
+        if ((proto->AllowableClass & bot->getClassMask()) == 0 || !(proto->AllowableRace & bot->getRaceMask()))
             continue;
 
         for (uint32 spell = 0; spell < MAX_ITEM_PROTO_SPELLS; spell++)
@@ -4745,7 +4745,7 @@ void PlayerbotFactory::InitGlyphs(bool increment)
             if (proto->Class != ITEM_CLASS_GLYPH)
                 continue;
 
-            if ((proto->AllowableClass & bot->getClassMask()) == 0 || (proto->AllowableRace & bot->getRaceMask()) == 0)
+            if ((proto->AllowableClass & bot->getClassMask()) == 0 || !(proto->AllowableRace & bot->getRaceMask()))
                 continue;
 
             if (proto->RequiredLevel > bot->GetLevel())

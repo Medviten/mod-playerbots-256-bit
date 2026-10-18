@@ -3405,7 +3405,7 @@ void TravelMgr::LoadQuestTravelTable()
 
             std::ostringstream out;
 
-            for (uint8 race = RACE_HUMAN; race < sRaceMgr->GetMaxRaces(); race++)
+            for (uint16 race = RACE_HUMAN; race < sRaceMgr->GetMaxRaces(); race++)
             {
                 for (uint8 cls = CLASS_WARRIOR; cls < MAX_CLASSES; ++cls)
                 {
@@ -4868,7 +4868,7 @@ void TravelMgr::PrepareDestinationCache()
 
             for (int32 l = 1; l <= 5; l++)
             {
-                if ((1 << (i - 1)) & sRaceMgr->GetAllianceRaceMask())
+                if (sRaceMgr->GetAllianceRaceMask().HasRace(i))
                     allianceHubsPerLevelCache[(uint8)l].push_back(pos);
                 else
                     hordeHubsPerLevelCache[(uint8)l].push_back(pos);

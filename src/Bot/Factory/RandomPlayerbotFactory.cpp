@@ -83,10 +83,11 @@ Player* RandomPlayerbotFactory::CreateRandomBot(WorldSession* session, uint8 cls
     const bool alliance = static_cast<bool>(urand(0, 1));
 
     std::vector<uint8> raceOptions;
-    for (uint8 race = RACE_HUMAN; race < sRaceMgr->GetMaxRaces(); ++race)
+    RaceMask const disabledRaces = sRaceMgr->GetCreationDisabledRaceMask();
+    for (uint16 race = RACE_HUMAN; race < sRaceMgr->GetMaxRaces(); ++race)
     {
         // skip disabled with config races
-        if ((1 << (race - 1)) & sWorld->getIntConfig(CONFIG_CHARACTER_CREATING_DISABLED_RACEMASK))
+        if (disabledRaces.HasRace(race))
             continue;
 
         // Try to get 50/50 faction distribution for random bot population balance.

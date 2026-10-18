@@ -9,6 +9,7 @@
 #include "DBCStores.h"
 #include "ItemTemplate.h"
 #include "Playerbots.h"
+#include "RaceMgr.h"
 
 std::unordered_set<uint32> RandomItemMgr::itemCache;
 
@@ -1413,20 +1414,8 @@ bool RandomItemMgr::IsValidItem(ItemTemplate const* proto)
     if ((proto->AllowableClass & CLASSMASK_ALL_PLAYABLE) == 0)
         return false;
 
-    constexpr uint32 RACEMASK_ALL_PLAYABLE =
-        (1 << (RACE_HUMAN - 1))         |
-        (1 << (RACE_ORC - 1))           |
-        (1 << (RACE_DWARF - 1))         |
-        (1 << (RACE_NIGHTELF - 1))      |
-        (1 << (RACE_UNDEAD_PLAYER - 1)) |
-        (1 << (RACE_TAUREN - 1))        |
-        (1 << (RACE_GNOME - 1))         |
-        (1 << (RACE_TROLL - 1))         |
-        (1 << (RACE_BLOODELF - 1))      |
-        (1 << (RACE_DRAENEI - 1));
-
     // check race-restricted items
-    if ((proto->AllowableRace & RACEMASK_ALL_PLAYABLE) == 0)
+    if (!(proto->AllowableRace & sRaceMgr->GetPlayableRaceMask()))
         return false;
 
     // check test/internal items

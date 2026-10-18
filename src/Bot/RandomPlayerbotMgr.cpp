@@ -2823,7 +2823,7 @@ void RandomPlayerbotMgr::PrintStats()
 
     std::map<uint8, uint32> lvlPerRace;
     std::map<uint8, uint32> lvlPerClass;
-    for (uint8 race = RACE_HUMAN; race < sRaceMgr->GetMaxRaces(); ++race)
+    for (uint16 race = RACE_HUMAN; race < sRaceMgr->GetMaxRaces(); ++race)
     {
         perRace[race] = 0;
         lvlPerRace[race] = 0;
@@ -2970,7 +2970,7 @@ void RandomPlayerbotMgr::PrintStats()
     }
 
     LOG_INFO("playerbots", "Bots race:");
-    for (uint8 race = RACE_HUMAN; race < sRaceMgr->GetMaxRaces(); ++race)
+    for (uint16 race = RACE_HUMAN; race < sRaceMgr->GetMaxRaces(); ++race)
     {
         if (perRace[race])
         {

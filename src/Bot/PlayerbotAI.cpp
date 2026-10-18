@@ -4538,7 +4538,7 @@ bool IsSelfBot(Player* player)
 // Same source as GetTeamId(true); TeamIdForRace() logs an error for non-playable races.
 bool IsAlliance(uint8 race)
 {
-    if (!race || race > 32 || !(sRaceMgr->GetPlayableRaceMask() & (1u << (race - 1))))
+    if (!sRaceMgr->GetPlayableRaceMask().HasRace(race))
         return false;
 
     return Player::TeamIdForRace(race) == TEAM_ALLIANCE;
