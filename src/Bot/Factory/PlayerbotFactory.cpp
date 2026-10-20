@@ -40,7 +40,6 @@
 #include "SpellMgr.h"
 #include "Trainer.h"
 #include "World.h"
-#include <algorithm>
 #include <array>
 #include <unordered_set>
 #include <utility>
@@ -4106,43 +4105,90 @@ void PlayerbotFactory::InitMounts()
             }
     }
 
-    // Races with mounts of their own, used only when this server has those spells (they come from optional
-    // modpaks); otherwise the race keeps the mounts of the stock race whose start area it shares
-    std::vector<uint32> raceSlow, raceFast;
+    // Races with mounts of their own. Most come from optional modpaks, so only the spells this server has are used,
+    // sorted by their mounted speed: they replace the mounts above of the same speed, and a speed the race has no
+    // mount of keeps those of the stock race whose start area it shares.
+    std::vector<uint32> raceMounts;
     switch (bot->getRace())
     {
         case RACE_GOBLIN:
-            raceSlow = {87090};
-            raceFast = {87091};
+            raceMounts = {87090, 87091}; // Goblin Trike, Goblin Turbo-Trike
             break;
         case RACE_WORGEN:
-            raceSlow = {103195};
-            raceFast = {103196};
+        case RACE_GILNEAN:
+            raceMounts = {103195, 103196}; // Mountain Horse, Swift Mountain Horse
             break;
         case RACE_PANDAREN:
         case RACE_ALLIANCEPANDAREN:
         case RACE_HORDEPANDAREN:
-            raceSlow = {127287, 120395};
-            raceFast = {127289, 127286};
+            raceMounts = {127287, 127289, 120395, 127286}; // Dragon Turtles
+            break;
+        case RACE_NIGHTBORNE:
+            raceMounts = {258845}; // Nightborne Manasaber
+            break;
+        case RACE_HIGHMOUNTAINTAUREN:
+            raceMounts = {258060}; // Highmountain Thunderhoof
+            break;
+        case RACE_VOIDELF:
+            raceMounts = {259202}; // Starcursed Voidstrider
+            break;
+        case RACE_LIGHTFORGEDDRAENEI:
+            raceMounts = {258022, 254258, 254259, 254069}; // Lightforged, Blessed, Avenging, Glorious Felcrusher
+            break;
+        case RACE_ZANDALARITROLL:
+            raceMounts = {263707, 279474}; // Zandalari Direhorn, Palehide Direhorn
+            break;
+        case RACE_KULTIRAN:
+            raceMounts = {282682}; // Kul Tiran Charger
+            break;
+        case RACE_DARKIRONDWARF:
+            raceMounts = {271646}; // Dark Iron Core Hound
             break;
         case RACE_VULPERA:
-            raceSlow = {306423};
-            raceFast = {306424};
+            raceMounts = {306423, 306424}; // Caravan Hyena
+            break;
+        case RACE_MAGHARORC:
+            raceMounts = {267274}; // Mag'har Direwolf
+            break;
+        case RACE_MECHAGNOME:
+            raceMounts = {305592}; // Mechagon Mechanostrider
+            break;
+        case RACE_OGRE:
+            raceMounts = {18990, 18989, 64657, 23249, 23248, 23247}; // Tauren kodos: ogres are big
+            break;
+        case RACE_ALLIANCEDRACTHYR:
+        case RACE_HORDEDRACTHYR:
+            raceMounts = {394216, 394218, 394220, 394219, 384963, 385134, 385115}; // Vorquins
+            break;
+        case RACE_HORDEEARTHEN:
+        case RACE_ALLIANCEEARTHEN:
+            raceMounts = {449415}; // Slatestone Ramolith
             break;
         default:
             break;
     }
 
-    auto const allKnown = [](std::vector<uint32> const& spells)
+    std::vector<uint32> raceSlow, raceFast;
+    for (uint32 spell : raceMounts)
     {
-        return !spells.empty() && std::all_of(spells.begin(), spells.end(),
-            [](uint32 spell) { return sSpellMgr->GetSpellInfo(spell) != nullptr; });
-    };
-    if (allKnown(raceSlow) && allKnown(raceFast))
-    {
-        slow = raceSlow;
-        fast = raceFast;
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spell);
+        if (!spellInfo)
+            continue;
+
+        for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+        {
+            if (spellInfo->Effects[i].ApplyAuraName != SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED)
+                continue;
+
+            (spellInfo->Effects[i].CalcValue() >= 100 ? raceFast : raceSlow).push_back(spell);
+            break;
+        }
     }
+
+    if (!raceSlow.empty())
+        slow = raceSlow;
+    if (!raceFast.empty())
+        fast = raceFast;
 
     switch (bot->GetTeamId())
     {
