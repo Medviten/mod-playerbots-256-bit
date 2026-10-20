@@ -43,26 +43,34 @@ constexpr RandomPlayerbotFactory::NameRaceAndGender RandomPlayerbotFactory::Comb
     NameRaceAndGender baseIndex;
     switch (race)
     {
-        case RACE_ORC:            baseIndex = NameRaceAndGender::OrcMale; break;
-        case RACE_DWARF:          baseIndex = NameRaceAndGender::DwarfMale; break;
-        case RACE_DARKIRONDWARF:  baseIndex = NameRaceAndGender::DwarfMale; break; // Dwarf names for Dark Iron Dwarves
-        case RACE_NIGHTELF:       baseIndex = NameRaceAndGender::NightelfMale; break;
-        case RACE_TAUREN:         baseIndex = NameRaceAndGender::TaurenMale; break;
-        case RACE_GNOME:          baseIndex = NameRaceAndGender::GnomeMale; break;
-        case RACE_TROLL:          baseIndex = NameRaceAndGender::TrollMale; break;
-        case RACE_ZANDALARITROLL: baseIndex = NameRaceAndGender::TrollMale; break; // Troll names for Zandalari Trolls
-        case RACE_BLOODELF:       baseIndex = NameRaceAndGender::BloodelfMale; break;
-        case RACE_HIGHELF:        baseIndex = NameRaceAndGender::BloodelfMale; break; // Blood Elf names for High Elves
-        case RACE_DRAENEI:        baseIndex = NameRaceAndGender::DraeneiMale; break;
-        case RACE_GOBLIN:         baseIndex = NameRaceAndGender::GnomeMale; break; // Gnome names for Goblins
-        case RACE_MAGHARORC:      baseIndex = NameRaceAndGender::OrcMale; break; // Orc names for Mag'har Orcs
-        case RACE_OGRE:           baseIndex = NameRaceAndGender::OrcMale; break; // Orc names for Ogres
+        case RACE_FELORC:
+        case RACE_MAGHARORC:
+        case RACE_OGRE:
+        case RACE_ORC:        baseIndex = NameRaceAndGender::OrcMale; break;
+        case RACE_DARKIRONDWARF:
+        case RACE_HORDEEARTHEN:
+        case RACE_ALLIANCEEARTHEN:
+        case RACE_DWARF:      baseIndex = NameRaceAndGender::DwarfMale; break;
+        case RACE_NIGHTELF:   baseIndex = NameRaceAndGender::NightelfMale; break;
+        case RACE_TAUNKA:
+        case RACE_HIGHMOUNTAINTAUREN:
+        case RACE_TAUREN:     baseIndex = NameRaceAndGender::TaurenMale; break;
+        case RACE_GOBLIN:
+        case RACE_MECHAGNOME:
+        case RACE_GNOME:      baseIndex = NameRaceAndGender::GnomeMale; break;
+        case RACE_FORESTTROLL:
+        case RACE_ICETROLL:
+        case RACE_ZANDALARITROLL:
+        case RACE_TROLL:      baseIndex = NameRaceAndGender::TrollMale; break;
+        case RACE_NIGHTBORNE:
+        case RACE_VOIDELF:
+        case RACE_HIGHELF:
+        case RACE_BLOODELF:   baseIndex = NameRaceAndGender::BloodelfMale; break;
+        case RACE_BROKEN:
+        case RACE_LIGHTFORGEDDRAENEI:
+        case RACE_DRAENEI:    baseIndex = NameRaceAndGender::DraeneiMale; break;
         case RACE_HUMAN:
         case RACE_UNDEAD_PLAYER:
-        case RACE_WORGEN: // Generic names for Worgen
-        case RACE_VULPERA: // Generic names for Vulpera
-        case RACE_ALLIANCEPANDAREN: // Generic names for Alliance Pandaren
-        case RACE_HORDEPANDAREN: // Generic names for Horde Pandaren
         default:
             baseIndex = NameRaceAndGender::GenericMale;
             break;
@@ -75,7 +83,8 @@ constexpr RandomPlayerbotFactory::NameRaceAndGender RandomPlayerbotFactory::Comb
 bool RandomPlayerbotFactory::IsValidRaceClassCombination(uint8 race, uint8 cls, uint32 expansion)
 {
     // skip expansion races if not playing with expansion
-    if (expansion < EXPANSION_THE_BURNING_CRUSADE && (race == RACE_BLOODELF || race == RACE_DRAENEI))
+    ChrRacesEntry const* raceEntry = sChrRacesStore.LookupEntry(race);
+    if (!raceEntry || raceEntry->expansion > expansion)
         return false;
 
     // skip expansion classes if not playing with expansion
@@ -170,12 +179,13 @@ Player* RandomPlayerbotFactory::CreateRandomBot(WorldSession* session, uint8 cls
     }
 
     //uint8 skinColor = skinColors[urand(0, skinColors.size() - 1)]; //not used, line marked for removal.
-    std::pair<uint8, uint8> face = faces[urand(0, faces.size() - 1)];
-    std::pair<uint8, uint8> hair = hairs[urand(0, hairs.size() - 1)];
+    // a race may lack some CharSections rows (new races in particular); use 0 for those
+    std::pair<uint8, uint8> face = faces.empty() ? std::pair<uint8, uint8>(0, 0) : faces[urand(0, faces.size() - 1)];
+    std::pair<uint8, uint8> hair = hairs.empty() ? std::pair<uint8, uint8>(0, 0) : hairs[urand(0, hairs.size() - 1)];
 
     bool excludeCheck = (race == RACE_TAUREN) || (race == RACE_DRAENEI) ||
                         (gender == GENDER_FEMALE && race != RACE_NIGHTELF && race != RACE_UNDEAD_PLAYER);
-    uint8 facialHair = excludeCheck ? 0 : facialHairTypes[urand(0, facialHairTypes.size() - 1)];
+    uint8 facialHair = (excludeCheck || facialHairTypes.empty()) ? 0 : facialHairTypes[urand(0, facialHairTypes.size() - 1)];
 
     std::unique_ptr<CharacterCreateInfo> characterInfo = std::make_unique<CharacterCreateInfo>(
         name, race, cls, gender, face.second, face.first, hair.first, hair.second, facialHair);

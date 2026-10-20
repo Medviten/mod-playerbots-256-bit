@@ -501,20 +501,9 @@ bool IsDpsCooldownAction(Player* bot, Action* action)
     if (isClassCooldown)
         return true;
 
-    switch (bot->getRace())
-    {
-        case RACE_BLOODELF:
-            return dynamic_cast<CastArcaneTorrentAction*>(action);
-
-        case RACE_ORC:
-            return dynamic_cast<CastBloodFuryAction*>(action);
-
-        case RACE_TROLL:
-            return dynamic_cast<CastBerserkingAction*>(action);
-
-        default:
-            return false;
-    }
+    // by action rather than race, as custom races may get these racials too
+    return dynamic_cast<CastArcaneTorrentAction*>(action) || dynamic_cast<CastBloodFuryAction*>(action) ||
+           dynamic_cast<CastBerserkingAction*>(action);
 }
 
 bool IsTauntAction(Player* bot, Action* action)

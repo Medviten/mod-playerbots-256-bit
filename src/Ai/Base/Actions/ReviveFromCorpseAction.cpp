@@ -12,6 +12,7 @@
 #include "MapMgr.h"
 #include "PlayerbotTextMgr.h"
 #include "Playerbots.h"
+#include "RaceMgr.h"
 #include "RandomPlayerbotMgr.h"
 #include "ServerFacade.h"
 
@@ -258,12 +259,13 @@ GraveyardStruct const* SpiritHealerAction::GetGrave(bool startZone)
     if (ownGrave && bot->GetLevel() > START_ZONE_GRAVEYARD_MAX_LEVEL)
         return ownGrave;
 
+    // every playable race of the bot's side (from ChrRaces.dbc), so start areas of custom races count too
     std::vector<uint32> races;
-
-    if (bot->GetTeamId() == TEAM_ALLIANCE)
-        races = {RACE_HUMAN, RACE_DWARF, RACE_GNOME, RACE_NIGHTELF, RACE_DRAENEI, RACE_WORGEN, RACE_HIGHELF, RACE_DARKIRONDWARF, RACE_ALLIANCEPANDAREN};
-    else
-        races = {RACE_ORC, RACE_TROLL, RACE_TAUREN, RACE_UNDEAD_PLAYER, RACE_BLOODELF, RACE_GOBLIN, RACE_MAGHARORC, RACE_OGRE, RACE_ZANDALARITROLL, RACE_VULPERA, RACE_HORDEPANDAREN};
+    for (uint16 race = RACE_HUMAN; race < sRaceMgr->GetMaxRaces(); ++race)
+    {
+        if (sRaceMgr->GetPlayableRaceMask().HasRace(race) && Player::TeamIdForRace(race) == bot->GetTeamId())
+            races.push_back(race);
+    }
 
     float graveDistance = -1;
 

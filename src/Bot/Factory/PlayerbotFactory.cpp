@@ -40,6 +40,7 @@
 #include "SpellMgr.h"
 #include "Trainer.h"
 #include "World.h"
+#include <algorithm>
 #include <array>
 #include <unordered_set>
 #include <utility>
@@ -2398,7 +2399,8 @@ void PlayerbotFactory::InitEquipment(bool incremental, bool second_chance)
     // that the bot meets the level requirement for.
     // Humans (Every Man for Himself) and Undead (Will of the Forsaken) have a
     // racial that shares the PvP trinket cooldown, so they don't need one.
-    bool racialHasCcBreak = (bot->getRace() == RACE_HUMAN || bot->getRace() == RACE_UNDEAD_PLAYER);
+    // checked by spell, as custom races may get either racial
+    bool racialHasCcBreak = bot->HasSpell(59752 /*Every Man for Himself*/) || bot->HasSpell(7744 /*Will of the Forsaken*/);
     uint32 pvpTrinket1 = 0;
     if (isPvp && level >= 50 && !racialHasCcBreak)
     {
@@ -4019,84 +4021,77 @@ void PlayerbotFactory::InitMounts()
     switch (bot->getRace())
     {
         case RACE_HUMAN:
+        case RACE_VRYKUL:
+        case RACE_PANDAREN:
+        case RACE_ALLIANCEPANDAREN:
+        case RACE_VOIDELF:
+        case RACE_KULTIRAN:
+        case RACE_THINHUMAN:
+        case RACE_HIGHELF:
+        case RACE_ALLIANCEDRACTHYR:
             slow = {470, 6648, 458, 472};
             fast = {23228, 23227, 23229};
             break;
         case RACE_ORC:
+        case RACE_GOBLIN:
+        case RACE_FELORC:
+        case RACE_MAGHARORC:
+        case RACE_OGRE:
+        case RACE_HORDEDRACTHYR:
+        case RACE_HORDEEARTHEN:
             slow = {6654, 6653, 580};
             fast = {23250, 23252, 23251};
             break;
         case RACE_DWARF:
+        case RACE_TUSKARR:
+        case RACE_DARKIRONDWARF:
+        case RACE_ALLIANCEEARTHEN:
             slow = {6899, 6777, 6898};
             fast = {23238, 23239, 23240};
             break;
         case RACE_NIGHTELF:
+        case RACE_WORGEN:
+        case RACE_GILNEAN:
             slow = {10789, 8394, 10793};
             fast = {23219, 23220, 63637};
             break;
         case RACE_UNDEAD_PLAYER:
+        case RACE_SKELETON:
+        case RACE_NORTHRENDSKELETON:
             slow = {17463, 17464, 17462};
             fast = {17465, 23246, 66846};
             break;
         case RACE_TAUREN:
+        case RACE_TAUNKA:
+        case RACE_HORDEPANDAREN:
+        case RACE_HIGHMOUNTAINTAUREN:
+        case RACE_VULPERA:
             slow = {18990, 18989, 64657};
             fast = {23249, 23248, 23247};
             break;
         case RACE_GNOME:
+        case RACE_MECHAGNOME:
             slow = {10969, 17453, 10873, 17454};
             fast = {23225, 23223, 23222};
             break;
         case RACE_TROLL:
-            slow = {10796, 10799, 8395};
-            fast = {23241, 23242, 23243};
-            break;
-        case RACE_DRAENEI:
-            slow = {34406, 35711, 35710};
-            fast = {35713, 35712, 35714};
-            break;
-        case RACE_BLOODELF:
-            slow = {33660, 35020, 35022, 35018};
-            fast = {35025, 35025, 35027};
-            break;
-        case RACE_GOBLIN:
-            slow = {87090};
-            fast = {87091};
-            break;
-        case RACE_WORGEN:
-            slow = {103195};
-            fast = {103196};
-            break;
-        case RACE_HIGHELF:
-            slow = {470, 6648, 458, 472};
-            fast = {23228, 23227, 23229};
-            break;
-        case RACE_MAGHARORC:
-            slow = {6654, 6653, 580};
-            fast = {23250, 23252, 23251};
-            break;
-        case RACE_OGRE:
-            slow = {18990, 18989, 64657};
-            fast = {23249, 23248, 23247};
-            break;
-        case RACE_DARKIRONDWARF:
-            slow = {6899, 6777, 6898};
-            fast = {23238, 23239, 23240};
-            break;
+        case RACE_FORESTTROLL:
+        case RACE_ICETROLL:
         case RACE_ZANDALARITROLL:
             slow = {10796, 10799, 8395};
             fast = {23241, 23242, 23243};
             break;
-        case RACE_VULPERA:
-            slow = {306423};
-            fast = {306424};
+        case RACE_DRAENEI:
+        case RACE_BROKEN:
+        case RACE_LIGHTFORGEDDRAENEI:
+            slow = {34406, 35711, 35710};
+            fast = {35713, 35712, 35714};
             break;
-        case RACE_ALLIANCEPANDAREN:
-            slow = {127287, 120395};
-            fast = {127289, 127286};
-            break;
-        case RACE_HORDEPANDAREN:
-            slow = {127287, 120395};
-            fast = {127289, 127286};
+        case RACE_BLOODELF:
+        case RACE_NAGA:
+        case RACE_NIGHTBORNE:
+            slow = {33660, 35020, 35022, 35018};
+            fast = {35025, 35025, 35027};
             break;
         default:
             if (bot->GetTeamId() == TEAM_HORDE)
@@ -4109,6 +4104,44 @@ void PlayerbotFactory::InitMounts()
                 slow = {470, 6648, 458, 472};
                 fast = {23228, 23227, 23229};
             }
+    }
+
+    // Races with mounts of their own, used only when this server has those spells (they come from optional
+    // modpaks); otherwise the race keeps the mounts of the stock race whose start area it shares
+    std::vector<uint32> raceSlow, raceFast;
+    switch (bot->getRace())
+    {
+        case RACE_GOBLIN:
+            raceSlow = {87090};
+            raceFast = {87091};
+            break;
+        case RACE_WORGEN:
+            raceSlow = {103195};
+            raceFast = {103196};
+            break;
+        case RACE_PANDAREN:
+        case RACE_ALLIANCEPANDAREN:
+        case RACE_HORDEPANDAREN:
+            raceSlow = {127287, 120395};
+            raceFast = {127289, 127286};
+            break;
+        case RACE_VULPERA:
+            raceSlow = {306423};
+            raceFast = {306424};
+            break;
+        default:
+            break;
+    }
+
+    auto const allKnown = [](std::vector<uint32> const& spells)
+    {
+        return !spells.empty() && std::all_of(spells.begin(), spells.end(),
+            [](uint32 spell) { return sSpellMgr->GetSpellInfo(spell) != nullptr; });
+    };
+    if (allKnown(raceSlow) && allKnown(raceFast))
+    {
+        slow = raceSlow;
+        fast = raceFast;
     }
 
     switch (bot->GetTeamId())
