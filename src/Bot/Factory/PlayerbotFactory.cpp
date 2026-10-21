@@ -4057,6 +4057,7 @@ void PlayerbotFactory::InitMounts()
         case RACE_UNDEAD_PLAYER:
         case RACE_SKELETON:
         case RACE_NORTHRENDSKELETON:
+        case RACE_DARKFALLEN:
             slow = {17463, 17464, 17462};
             fast = {17465, 23246, 66846};
             break;

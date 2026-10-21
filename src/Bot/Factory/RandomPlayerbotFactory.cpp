@@ -65,6 +65,7 @@ constexpr RandomPlayerbotFactory::NameRaceAndGender RandomPlayerbotFactory::Comb
         case RACE_NIGHTBORNE:
         case RACE_VOIDELF:
         case RACE_HIGHELF:
+        case RACE_DARKFALLEN:
         case RACE_BLOODELF:   baseIndex = NameRaceAndGender::BloodelfMale; break;
         case RACE_BROKEN:
         case RACE_LIGHTFORGEDDRAENEI:
@@ -125,7 +126,9 @@ Player* RandomPlayerbotFactory::CreateRandomBot(WorldSession* session, uint8 cls
     }
 
     const uint8 race = raceOptions[urand(0, raceOptions.size() - 1)];
-    const uint8 gender = urand(0, 1) ? GENDER_MALE : GENDER_FEMALE;
+    // races without a female model are male-only (Player::Create would make them male anyway; picking it here
+    // keeps the name and appearance male too)
+    const uint8 gender = (urand(0, 1) || sRaceMgr->IsMaleOnlyRace(race)) ? GENDER_MALE : GENDER_FEMALE;
     const auto raceAndGender = CombineRaceAndGender(race, gender);
 
     std::string name;
