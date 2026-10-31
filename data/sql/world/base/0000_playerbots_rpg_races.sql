@@ -817,6 +817,7 @@ JOIN (
     UNION ALL SELECT  38 AS race,  1 AS home -- HighElf: Human
     UNION ALL SELECT  39 AS race,  2 AS home -- Ogre: Orc
     UNION ALL SELECT  40 AS race,  5 AS home -- Darkfallen: Undead
+    UNION ALL SELECT  41 AS race,  8 AS home -- Murloc: Troll
     UNION ALL SELECT  52 AS race,  1 AS home -- AllianceDracthyr: Human
     UNION ALL SELECT  70 AS race,  2 AS home -- HordeDracthyr: Orc
     UNION ALL SELECT  84 AS race,  2 AS home -- HordeEarthen: Orc

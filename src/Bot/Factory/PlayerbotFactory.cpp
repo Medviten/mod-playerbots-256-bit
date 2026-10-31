@@ -4078,6 +4078,7 @@ void PlayerbotFactory::InitMounts()
         case RACE_FORESTTROLL:
         case RACE_ICETROLL:
         case RACE_ZANDALARITROLL:
+        case RACE_MURLOC:
             slow = {10796, 10799, 8395};
             fast = {23241, 23242, 23243};
             break;
