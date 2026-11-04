@@ -5,6 +5,7 @@
  */
 
 #include "RandomPlayerbotFactory.h"
+#include "BotRaceTemplates.h"
 #include "PlayerbotsDatabase.h"
 #include "AccountMgr.h"
 #include "ArenaTeamMgr.h"
@@ -43,32 +44,13 @@ constexpr RandomPlayerbotFactory::NameRaceAndGender RandomPlayerbotFactory::Comb
     NameRaceAndGender baseIndex;
     switch (race)
     {
-        case RACE_FELORC:
-        case RACE_MAGHARORC:
-        case RACE_OGRE:
         case RACE_ORC:        baseIndex = NameRaceAndGender::OrcMale; break;
-        case RACE_DARKIRONDWARF:
-        case RACE_HORDEEARTHEN:
-        case RACE_ALLIANCEEARTHEN:
         case RACE_DWARF:      baseIndex = NameRaceAndGender::DwarfMale; break;
         case RACE_NIGHTELF:   baseIndex = NameRaceAndGender::NightelfMale; break;
-        case RACE_TAUNKA:
-        case RACE_HIGHMOUNTAINTAUREN:
         case RACE_TAUREN:     baseIndex = NameRaceAndGender::TaurenMale; break;
-        case RACE_GOBLIN:
-        case RACE_MECHAGNOME:
         case RACE_GNOME:      baseIndex = NameRaceAndGender::GnomeMale; break;
-        case RACE_FORESTTROLL:
-        case RACE_ICETROLL:
-        case RACE_ZANDALARITROLL:
         case RACE_TROLL:      baseIndex = NameRaceAndGender::TrollMale; break;
-        case RACE_NIGHTBORNE:
-        case RACE_VOIDELF:
-        case RACE_HIGHELF:
-        case RACE_DARKFALLEN:
         case RACE_BLOODELF:   baseIndex = NameRaceAndGender::BloodelfMale; break;
-        case RACE_BROKEN:
-        case RACE_LIGHTFORGEDDRAENEI:
         case RACE_DRAENEI:    baseIndex = NameRaceAndGender::DraeneiMale; break;
         case RACE_HUMAN:
         case RACE_UNDEAD_PLAYER:
@@ -129,7 +111,7 @@ Player* RandomPlayerbotFactory::CreateRandomBot(WorldSession* session, uint8 cls
     // races without a female model are male-only (Player::Create would make them male anyway; picking it here
     // keeps the name and appearance male too)
     const uint8 gender = (urand(0, 1) || sRaceMgr->IsMaleOnlyRace(race)) ? GENDER_MALE : GENDER_FEMALE;
-    const auto raceAndGender = CombineRaceAndGender(race, gender);
+    const auto raceAndGender = CombineRaceAndGender(BotRaceTemplates::GetNameRace(race), gender);
 
     std::string name;
     if (!nameCache.empty())

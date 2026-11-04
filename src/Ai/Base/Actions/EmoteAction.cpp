@@ -7,7 +7,10 @@
 #include "EmoteAction.h"
 #include "Event.h"
 #include "Playerbots.h"
+#include "RaceMgr.h"
 #include "ServerFacade.h"
+
+#include <unordered_map>
 
 std::map<std::string, uint32> EmoteActionBase::emotes;
 std::map<std::string, uint32> EmoteActionBase::textEmotes;
@@ -875,27 +878,47 @@ uint32 TalkAction::GetRandomEmote(Unit* unit, bool textEmote)
 
 uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, uint8 Gender)
 {
+    // WHE: Goblin (race 9) and Worgen (race 22) have their own emote sounds. Goblin females have as many variants as the
+    // males: { emote, { male, Worgen female } }
+    static std::unordered_map<uint32, std::pair<uint32, uint32>> const ownVariants = {
+        {304, {1, 1}},
+        {305, {5, 4}},
+        {306, {3, 3}},
+        {TEXT_EMOTE_HELLO, {4, 4}},
+        {324, {3, 3}},
+        {325, {2, 2}},
+        {326, {2, 2}},
+        {TEXT_EMOTE_CHEER, {2, 2}},
+        {TEXT_EMOTE_OPENFIRE, {2, 2}},
+        {TEXT_EMOTE_BYE, {4, 4}},
+        {TEXT_EMOTE_NOD, {6, 4}},
+        {TEXT_EMOTE_NO, {3, 3}},
+        {TEXT_EMOTE_THANK, {3, 3}},
+        {TEXT_EMOTE_FLIRT, {10, 9}},
+        {TEXT_EMOTE_JOKE, {10, 9}},
+    };
+
+    if (Race == 9 || Race == 22)
+    {
+        auto itr = ownVariants.find(emote);
+        if (itr == ownVariants.end())
+            return 1;
+
+        return Race == 9 || Gender == GENDER_MALE ? itr->second.first : itr->second.second;
+    }
+
+    // Other races use the variants of their kin
+    Race = sRaceMgr->GetKinRace(Race);
+
     if (emote == 304)
     {
         switch (Race)
         {
             case RACE_HUMAN:
-            case RACE_VRYKUL:
-            case RACE_GILNEAN:
-            case RACE_KULTIRAN:
-            case RACE_THINHUMAN:
             case RACE_DWARF:
-            case RACE_DARKIRONDWARF:
-            case RACE_HORDEEARTHEN:
-            case RACE_ALLIANCEEARTHEN:
             case RACE_NIGHTELF:
             case RACE_UNDEAD_PLAYER:
-            case RACE_SKELETON:
-            case RACE_NORTHRENDSKELETON:
             case RACE_TROLL:
-            case RACE_FORESTTROLL:
-            case RACE_ICETROLL:
-            case RACE_ZANDALARITROLL:
             {
                 if (Gender == GENDER_MALE)
                     return 2;
@@ -903,9 +926,6 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 2;
             }
             case RACE_GNOME:
-            case RACE_MECHAGNOME:
-            case RACE_GOBLIN:
-            case RACE_WORGEN:
             {
                 if (Gender == GENDER_MALE)
                     return 1;
@@ -913,9 +933,6 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 1;
             }
             case RACE_ORC:
-            case RACE_FELORC:
-            case RACE_MAGHARORC:
-            case RACE_OGRE:
             {
                 if (Gender == GENDER_MALE)
                     return 3;
@@ -923,12 +940,6 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 2;
             }
             case RACE_TAUREN:
-            case RACE_TAUNKA:
-            case RACE_PANDAREN:
-            case RACE_ALLIANCEPANDAREN:
-            case RACE_HORDEPANDAREN:
-            case RACE_HIGHMOUNTAINTAUREN:
-            case RACE_VULPERA:
             {
                 if (Gender == GENDER_MALE)
                     return 2;
@@ -942,21 +953,9 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
         switch (Race)
         {
             case RACE_HUMAN:
-            case RACE_VRYKUL:
-            case RACE_GILNEAN:
-            case RACE_KULTIRAN:
-            case RACE_THINHUMAN:
             case RACE_DWARF:
-            case RACE_DARKIRONDWARF:
-            case RACE_HORDEEARTHEN:
-            case RACE_ALLIANCEEARTHEN:
             case RACE_UNDEAD_PLAYER:
-            case RACE_SKELETON:
-            case RACE_NORTHRENDSKELETON:
             case RACE_TROLL:
-            case RACE_FORESTTROLL:
-            case RACE_ICETROLL:
-            case RACE_ZANDALARITROLL:
             {
                 if (Gender == GENDER_MALE)
                     return 2;
@@ -971,14 +970,7 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 3;
             }
             case RACE_GNOME:
-            case RACE_MECHAGNOME:
             case RACE_TAUREN:
-            case RACE_TAUNKA:
-            case RACE_PANDAREN:
-            case RACE_ALLIANCEPANDAREN:
-            case RACE_HORDEPANDAREN:
-            case RACE_HIGHMOUNTAINTAUREN:
-            case RACE_VULPERA:
             {
                 if (Gender == GENDER_MALE)
                     return 3;
@@ -986,28 +978,11 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 2;
             }
             case RACE_ORC:
-            case RACE_FELORC:
-            case RACE_MAGHARORC:
-            case RACE_OGRE:
             {
                 if (Gender == GENDER_MALE)
                     return 3;
 
                 return 3;
-            }
-            case RACE_WORGEN:
-            {
-                if (Gender == GENDER_MALE)
-                    return 5;
-
-                return 4;
-            }
-            case RACE_GOBLIN:
-            {
-                if (Gender == GENDER_MALE)
-                    return 5;
-
-                return 5;
             }
         }
     }
@@ -1016,29 +991,11 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
         switch (Race)
         {
             case RACE_HUMAN:
-            case RACE_VRYKUL:
-            case RACE_GILNEAN:
-            case RACE_KULTIRAN:
-            case RACE_THINHUMAN:
             case RACE_NIGHTELF:
             case RACE_ORC:
-            case RACE_FELORC:
-            case RACE_MAGHARORC:
-            case RACE_OGRE:
             case RACE_UNDEAD_PLAYER:
-            case RACE_SKELETON:
-            case RACE_NORTHRENDSKELETON:
             case RACE_TAUREN:
-            case RACE_TAUNKA:
-            case RACE_PANDAREN:
-            case RACE_ALLIANCEPANDAREN:
-            case RACE_HORDEPANDAREN:
-            case RACE_HIGHMOUNTAINTAUREN:
-            case RACE_VULPERA:
             case RACE_TROLL:
-            case RACE_FORESTTROLL:
-            case RACE_ICETROLL:
-            case RACE_ZANDALARITROLL:
             {
                 if (Gender == GENDER_MALE)
                     return 2;
@@ -1046,9 +1003,6 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 2;
             }
             case RACE_DWARF:
-            case RACE_DARKIRONDWARF:
-            case RACE_HORDEEARTHEN:
-            case RACE_ALLIANCEEARTHEN:
             {
                 if (Gender == GENDER_MALE)
                     return 3;
@@ -1056,9 +1010,6 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 2;
             }
             case RACE_GNOME:
-            case RACE_MECHAGNOME:
-            case RACE_GOBLIN:
-            case RACE_WORGEN:
             {
                 if (Gender == GENDER_MALE)
                     return 3;
@@ -1072,16 +1023,8 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
         switch (Race)
         {
             case RACE_HUMAN:
-            case RACE_VRYKUL:
-            case RACE_GILNEAN:
-            case RACE_KULTIRAN:
-            case RACE_THINHUMAN:
             case RACE_DWARF:
-            case RACE_DARKIRONDWARF:
-            case RACE_HORDEEARTHEN:
-            case RACE_ALLIANCEEARTHEN:
             case RACE_GNOME:
-            case RACE_MECHAGNOME:
             {
                 if (Gender == GENDER_MALE)
                     return 4;
@@ -1096,36 +1039,14 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 4;
             }
             case RACE_ORC:
-            case RACE_FELORC:
-            case RACE_MAGHARORC:
-            case RACE_OGRE:
             case RACE_UNDEAD_PLAYER:
-            case RACE_SKELETON:
-            case RACE_NORTHRENDSKELETON:
             case RACE_TAUREN:
-            case RACE_TAUNKA:
-            case RACE_PANDAREN:
-            case RACE_ALLIANCEPANDAREN:
-            case RACE_HORDEPANDAREN:
-            case RACE_HIGHMOUNTAINTAUREN:
-            case RACE_VULPERA:
             case RACE_TROLL:
-            case RACE_FORESTTROLL:
-            case RACE_ICETROLL:
-            case RACE_ZANDALARITROLL:
             {
                 if (Gender == GENDER_MALE)
                     return 3;
 
                 return 3;
-            }
-            case RACE_WORGEN:
-            case RACE_GOBLIN:
-            {
-                if (Gender == GENDER_MALE)
-                    return 4;
-
-                return 4;
             }
         }
     }
@@ -1138,29 +1059,11 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
         switch (Race)
         {
             case RACE_HUMAN:
-            case RACE_VRYKUL:
-            case RACE_GILNEAN:
-            case RACE_KULTIRAN:
-            case RACE_THINHUMAN:
             case RACE_NIGHTELF:
             case RACE_ORC:
-            case RACE_FELORC:
-            case RACE_MAGHARORC:
-            case RACE_OGRE:
             case RACE_UNDEAD_PLAYER:
-            case RACE_SKELETON:
-            case RACE_NORTHRENDSKELETON:
             case RACE_TAUREN:
-            case RACE_TAUNKA:
-            case RACE_PANDAREN:
-            case RACE_ALLIANCEPANDAREN:
-            case RACE_HORDEPANDAREN:
-            case RACE_HIGHMOUNTAINTAUREN:
-            case RACE_VULPERA:
             case RACE_TROLL:
-            case RACE_FORESTTROLL:
-            case RACE_ICETROLL:
-            case RACE_ZANDALARITROLL:
             {
                 if (Gender == GENDER_MALE)
                     return 2;
@@ -1168,9 +1071,6 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 2;
             }
             case RACE_DWARF:
-            case RACE_DARKIRONDWARF:
-            case RACE_HORDEEARTHEN:
-            case RACE_ALLIANCEEARTHEN:
             {
                 if (Gender == GENDER_MALE)
                     return 3;
@@ -1178,20 +1078,11 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 2;
             }
             case RACE_GNOME:
-            case RACE_MECHAGNOME:
             {
                 if (Gender == GENDER_MALE)
                     return 2;
 
                 return 1;
-            }
-            case RACE_WORGEN:
-            case RACE_GOBLIN:
-            {
-                if (Gender == GENDER_MALE)
-                    return 3;
-
-                return 3;
             }
         }
     }
@@ -1200,14 +1091,7 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
         switch (Race)
         {
             case RACE_HUMAN:
-            case RACE_VRYKUL:
-            case RACE_GILNEAN:
-            case RACE_KULTIRAN:
-            case RACE_THINHUMAN:
             case RACE_TROLL:
-            case RACE_FORESTTROLL:
-            case RACE_ICETROLL:
-            case RACE_ZANDALARITROLL:
             {
                 if (Gender == GENDER_MALE)
                     return 3;
@@ -1215,16 +1099,7 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 3;
             }
             case RACE_DWARF:
-            case RACE_DARKIRONDWARF:
-            case RACE_HORDEEARTHEN:
-            case RACE_ALLIANCEEARTHEN:
             case RACE_TAUREN:
-            case RACE_TAUNKA:
-            case RACE_PANDAREN:
-            case RACE_ALLIANCEPANDAREN:
-            case RACE_HORDEPANDAREN:
-            case RACE_HIGHMOUNTAINTAUREN:
-            case RACE_VULPERA:
             {
                 if (Gender == GENDER_MALE)
                     return 3;
@@ -1233,16 +1108,8 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
             }
             case RACE_NIGHTELF:
             case RACE_GNOME:
-            case RACE_MECHAGNOME:
             case RACE_ORC:
-            case RACE_FELORC:
-            case RACE_MAGHARORC:
-            case RACE_OGRE:
             case RACE_UNDEAD_PLAYER:
-            case RACE_SKELETON:
-            case RACE_NORTHRENDSKELETON:
-            case RACE_GOBLIN:
-            case RACE_WORGEN:
             {
                 if (Gender == GENDER_MALE)
                     return 2;
@@ -1256,29 +1123,11 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
         switch (Race)
         {
             case RACE_HUMAN:
-            case RACE_VRYKUL:
-            case RACE_GILNEAN:
-            case RACE_KULTIRAN:
-            case RACE_THINHUMAN:
             case RACE_NIGHTELF:
             case RACE_GNOME:
-            case RACE_MECHAGNOME:
             case RACE_ORC:
-            case RACE_FELORC:
-            case RACE_MAGHARORC:
-            case RACE_OGRE:
             case RACE_UNDEAD_PLAYER:
-            case RACE_SKELETON:
-            case RACE_NORTHRENDSKELETON:
             case RACE_TAUREN:
-            case RACE_TAUNKA:
-            case RACE_PANDAREN:
-            case RACE_ALLIANCEPANDAREN:
-            case RACE_HORDEPANDAREN:
-            case RACE_HIGHMOUNTAINTAUREN:
-            case RACE_VULPERA:
-            case RACE_GOBLIN:
-            case RACE_WORGEN:
             {
                 if (Gender == GENDER_MALE)
                     return 2;
@@ -1286,13 +1135,7 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 2;
             }
             case RACE_DWARF:
-            case RACE_DARKIRONDWARF:
-            case RACE_HORDEEARTHEN:
-            case RACE_ALLIANCEEARTHEN:
             case RACE_TROLL:
-            case RACE_FORESTTROLL:
-            case RACE_ICETROLL:
-            case RACE_ZANDALARITROLL:
             {
                 if (Gender == GENDER_MALE)
                     return 3;
@@ -1306,29 +1149,11 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
         switch (Race)
         {
             case RACE_HUMAN:
-            case RACE_VRYKUL:
-            case RACE_GILNEAN:
-            case RACE_KULTIRAN:
-            case RACE_THINHUMAN:
             case RACE_NIGHTELF:
             case RACE_GNOME:
-            case RACE_MECHAGNOME:
             case RACE_ORC:
-            case RACE_FELORC:
-            case RACE_MAGHARORC:
-            case RACE_OGRE:
             case RACE_UNDEAD_PLAYER:
-            case RACE_SKELETON:
-            case RACE_NORTHRENDSKELETON:
             case RACE_TAUREN:
-            case RACE_TAUNKA:
-            case RACE_PANDAREN:
-            case RACE_ALLIANCEPANDAREN:
-            case RACE_HORDEPANDAREN:
-            case RACE_HIGHMOUNTAINTAUREN:
-            case RACE_VULPERA:
-            case RACE_GOBLIN:
-            case RACE_WORGEN:
             {
                 if (Gender == GENDER_MALE)
                     return 2;
@@ -1336,13 +1161,7 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 2;
             }
             case RACE_DWARF:
-            case RACE_DARKIRONDWARF:
-            case RACE_HORDEEARTHEN:
-            case RACE_ALLIANCEEARTHEN:
             case RACE_TROLL:
-            case RACE_FORESTTROLL:
-            case RACE_ICETROLL:
-            case RACE_ZANDALARITROLL:
             {
                 if (Gender == GENDER_MALE)
                     return 3;
@@ -1356,40 +1175,16 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
         switch (Race)
         {
             case RACE_HUMAN:
-            case RACE_VRYKUL:
-            case RACE_GILNEAN:
-            case RACE_KULTIRAN:
-            case RACE_THINHUMAN:
             case RACE_DWARF:
-            case RACE_DARKIRONDWARF:
-            case RACE_HORDEEARTHEN:
-            case RACE_ALLIANCEEARTHEN:
             case RACE_NIGHTELF:
             case RACE_UNDEAD_PLAYER:
-            case RACE_SKELETON:
-            case RACE_NORTHRENDSKELETON:
             case RACE_TAUREN:
-            case RACE_TAUNKA:
-            case RACE_PANDAREN:
-            case RACE_ALLIANCEPANDAREN:
-            case RACE_HORDEPANDAREN:
-            case RACE_HIGHMOUNTAINTAUREN:
-            case RACE_VULPERA:
             case RACE_TROLL:
-            case RACE_FORESTTROLL:
-            case RACE_ICETROLL:
-            case RACE_ZANDALARITROLL:
             case RACE_GNOME:
-            case RACE_MECHAGNOME:
-            case RACE_GOBLIN:
-            case RACE_WORGEN:
             {
                 return 2;
             }
             case RACE_ORC:
-            case RACE_FELORC:
-            case RACE_MAGHARORC:
-            case RACE_OGRE:
             {
                 if (Gender == GENDER_MALE)
                     return 2;
@@ -1403,33 +1198,12 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
         switch (Race)
         {
             case RACE_HUMAN:
-            case RACE_VRYKUL:
-            case RACE_GILNEAN:
-            case RACE_KULTIRAN:
-            case RACE_THINHUMAN:
             case RACE_DWARF:
-            case RACE_DARKIRONDWARF:
-            case RACE_HORDEEARTHEN:
-            case RACE_ALLIANCEEARTHEN:
             case RACE_NIGHTELF:
             case RACE_ORC:
-            case RACE_FELORC:
-            case RACE_MAGHARORC:
-            case RACE_OGRE:
             case RACE_UNDEAD_PLAYER:
-            case RACE_SKELETON:
-            case RACE_NORTHRENDSKELETON:
             case RACE_TAUREN:
-            case RACE_TAUNKA:
-            case RACE_PANDAREN:
-            case RACE_ALLIANCEPANDAREN:
-            case RACE_HORDEPANDAREN:
-            case RACE_HIGHMOUNTAINTAUREN:
-            case RACE_VULPERA:
             case RACE_TROLL:
-            case RACE_FORESTTROLL:
-            case RACE_ICETROLL:
-            case RACE_ZANDALARITROLL:
             {
                 if (Gender == GENDER_MALE)
                     return 3;
@@ -1437,9 +1211,6 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 3;
             }
             case RACE_GNOME:
-            case RACE_MECHAGNOME:
-            case RACE_GOBLIN:
-            case RACE_WORGEN:
             {
                 if (Gender == GENDER_MALE)
                     return 4;
@@ -1453,23 +1224,10 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
         switch (Race)
         {
             case RACE_HUMAN:
-            case RACE_VRYKUL:
-            case RACE_GILNEAN:
-            case RACE_KULTIRAN:
-            case RACE_THINHUMAN:
             case RACE_NIGHTELF:
             case RACE_GNOME:
-            case RACE_MECHAGNOME:
             case RACE_UNDEAD_PLAYER:
-            case RACE_SKELETON:
-            case RACE_NORTHRENDSKELETON:
             case RACE_TAUREN:
-            case RACE_TAUNKA:
-            case RACE_PANDAREN:
-            case RACE_ALLIANCEPANDAREN:
-            case RACE_HORDEPANDAREN:
-            case RACE_HIGHMOUNTAINTAUREN:
-            case RACE_VULPERA:
             {
                 if (Gender == GENDER_MALE)
                     return 3;
@@ -1477,13 +1235,7 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 3;
             }
             case RACE_DWARF:
-            case RACE_DARKIRONDWARF:
-            case RACE_HORDEEARTHEN:
-            case RACE_ALLIANCEEARTHEN:
             case RACE_TROLL:
-            case RACE_FORESTTROLL:
-            case RACE_ICETROLL:
-            case RACE_ZANDALARITROLL:
             {
                 if (Gender == GENDER_MALE)
                     return 4;
@@ -1491,28 +1243,11 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 3;
             }
             case RACE_ORC:
-            case RACE_FELORC:
-            case RACE_MAGHARORC:
-            case RACE_OGRE:
             {
                 if (Gender == GENDER_MALE)
                     return 4;
 
                 return 4;
-            }
-            case RACE_WORGEN:
-            {
-                if (Gender == GENDER_MALE)
-                    return 6;
-
-                return 4;
-            }
-            case RACE_GOBLIN:
-            {
-                if (Gender == GENDER_MALE)
-                    return 6;
-
-                return 6;
             }
         }
     }
@@ -1521,18 +1256,8 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
         switch (Race)
         {
             case RACE_HUMAN:
-            case RACE_VRYKUL:
-            case RACE_GILNEAN:
-            case RACE_KULTIRAN:
-            case RACE_THINHUMAN:
             case RACE_DWARF:
-            case RACE_DARKIRONDWARF:
-            case RACE_HORDEEARTHEN:
-            case RACE_ALLIANCEEARTHEN:
             case RACE_TROLL:
-            case RACE_FORESTTROLL:
-            case RACE_ICETROLL:
-            case RACE_ZANDALARITROLL:
             {
                 if (Gender == GENDER_MALE)
                     return 4;
@@ -1541,23 +1266,9 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
             }
             case RACE_NIGHTELF:
             case RACE_GNOME:
-            case RACE_MECHAGNOME:
             case RACE_ORC:
-            case RACE_FELORC:
-            case RACE_MAGHARORC:
-            case RACE_OGRE:
             case RACE_UNDEAD_PLAYER:
-            case RACE_SKELETON:
-            case RACE_NORTHRENDSKELETON:
             case RACE_TAUREN:
-            case RACE_TAUNKA:
-            case RACE_PANDAREN:
-            case RACE_ALLIANCEPANDAREN:
-            case RACE_HORDEPANDAREN:
-            case RACE_HIGHMOUNTAINTAUREN:
-            case RACE_VULPERA:
-            case RACE_GOBLIN:
-            case RACE_WORGEN:
             {
                 if (Gender == GENDER_MALE)
                     return 3;
@@ -1571,26 +1282,11 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
         switch (Race)
         {
             case RACE_HUMAN:
-            case RACE_VRYKUL:
-            case RACE_GILNEAN:
-            case RACE_KULTIRAN:
-            case RACE_THINHUMAN:
             case RACE_NIGHTELF:
             case RACE_GNOME:
-            case RACE_MECHAGNOME:
             case RACE_ORC:
-            case RACE_FELORC:
-            case RACE_MAGHARORC:
-            case RACE_OGRE:
             case RACE_UNDEAD_PLAYER:
-            case RACE_SKELETON:
-            case RACE_NORTHRENDSKELETON:
             case RACE_TROLL:
-            case RACE_FORESTTROLL:
-            case RACE_ICETROLL:
-            case RACE_ZANDALARITROLL:
-            case RACE_GOBLIN:
-            case RACE_WORGEN:
             {
                 if (Gender == GENDER_MALE)
                     return 3;
@@ -1598,9 +1294,6 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 3;
             }
             case RACE_DWARF:
-            case RACE_DARKIRONDWARF:
-            case RACE_HORDEEARTHEN:
-            case RACE_ALLIANCEEARTHEN:
             {
                 if (Gender == GENDER_MALE)
                     return 4;
@@ -1608,12 +1301,6 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 4;
             }
             case RACE_TAUREN:
-            case RACE_TAUNKA:
-            case RACE_PANDAREN:
-            case RACE_ALLIANCEPANDAREN:
-            case RACE_HORDEPANDAREN:
-            case RACE_HIGHMOUNTAINTAUREN:
-            case RACE_VULPERA:
             {
                 if (Gender == GENDER_MALE)
                     return 4;
@@ -1627,40 +1314,18 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
         switch (Race)
         {
             case RACE_HUMAN:
-            case RACE_VRYKUL:
-            case RACE_GILNEAN:
-            case RACE_KULTIRAN:
-            case RACE_THINHUMAN:
             case RACE_DWARF:
-            case RACE_DARKIRONDWARF:
-            case RACE_HORDEEARTHEN:
-            case RACE_ALLIANCEEARTHEN:
             case RACE_NIGHTELF:
             case RACE_GNOME:
-            case RACE_MECHAGNOME:
             case RACE_ORC:
-            case RACE_FELORC:
-            case RACE_MAGHARORC:
-            case RACE_OGRE:
             case RACE_TAUREN:
-            case RACE_TAUNKA:
-            case RACE_PANDAREN:
-            case RACE_ALLIANCEPANDAREN:
-            case RACE_HORDEPANDAREN:
-            case RACE_HIGHMOUNTAINTAUREN:
-            case RACE_VULPERA:
             case RACE_TROLL:
-            case RACE_FORESTTROLL:
-            case RACE_ICETROLL:
-            case RACE_ZANDALARITROLL:
             {
                 if (Gender == GENDER_MALE)
                     return 3;
                 return 3;
             }
             case RACE_UNDEAD_PLAYER:
-            case RACE_SKELETON:
-            case RACE_NORTHRENDSKELETON:
             {
                 if (Gender == GENDER_MALE)
                     return 2;
@@ -1673,26 +1338,10 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
         switch (Race)
         {
             case RACE_HUMAN:
-            case RACE_VRYKUL:
-            case RACE_GILNEAN:
-            case RACE_KULTIRAN:
-            case RACE_THINHUMAN:
             case RACE_NIGHTELF:
             case RACE_ORC:
-            case RACE_FELORC:
-            case RACE_MAGHARORC:
-            case RACE_OGRE:
             case RACE_TAUREN:
-            case RACE_TAUNKA:
-            case RACE_PANDAREN:
-            case RACE_ALLIANCEPANDAREN:
-            case RACE_HORDEPANDAREN:
-            case RACE_HIGHMOUNTAINTAUREN:
-            case RACE_VULPERA:
             case RACE_TROLL:
-            case RACE_FORESTTROLL:
-            case RACE_ICETROLL:
-            case RACE_ZANDALARITROLL:
             {
                 if (Gender == GENDER_MALE)
                     return 3;
@@ -1700,9 +1349,6 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 3;
             }
             case RACE_DWARF:
-            case RACE_DARKIRONDWARF:
-            case RACE_HORDEEARTHEN:
-            case RACE_ALLIANCEEARTHEN:
             {
                 if (Gender == GENDER_MALE)
                     return 5;
@@ -1710,10 +1356,7 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 4;
             }
             case RACE_GNOME:
-            case RACE_MECHAGNOME:
             case RACE_UNDEAD_PLAYER:
-            case RACE_SKELETON:
-            case RACE_NORTHRENDSKELETON:
             {
                 if (Gender == GENDER_MALE)
                     return 3;
@@ -1727,26 +1370,13 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
         switch (Race)
         {
             case RACE_HUMAN:
-            case RACE_VRYKUL:
-            case RACE_GILNEAN:
-            case RACE_KULTIRAN:
-            case RACE_THINHUMAN:
             {
                 if (Gender == GENDER_MALE)
                     return 6;
                 return 3;
             }
             case RACE_DWARF:
-            case RACE_DARKIRONDWARF:
-            case RACE_HORDEEARTHEN:
-            case RACE_ALLIANCEEARTHEN:
             case RACE_TAUREN:
-            case RACE_TAUNKA:
-            case RACE_PANDAREN:
-            case RACE_ALLIANCEPANDAREN:
-            case RACE_HORDEPANDAREN:
-            case RACE_HIGHMOUNTAINTAUREN:
-            case RACE_VULPERA:
             {
                 if (Gender == GENDER_MALE)
                     return 6;
@@ -1761,11 +1391,7 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 4;
             }
             case RACE_GNOME:
-            case RACE_MECHAGNOME:
             case RACE_TROLL:
-            case RACE_FORESTTROLL:
-            case RACE_ICETROLL:
-            case RACE_ZANDALARITROLL:
             {
                 if (Gender == GENDER_MALE)
                     return 4;
@@ -1773,31 +1399,12 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 5;
             }
             case RACE_ORC:
-            case RACE_FELORC:
-            case RACE_MAGHARORC:
-            case RACE_OGRE:
             case RACE_UNDEAD_PLAYER:
-            case RACE_SKELETON:
-            case RACE_NORTHRENDSKELETON:
             {
                 if (Gender == GENDER_MALE)
                     return 6;
 
                 return 6;
-            }
-            case RACE_WORGEN:
-            {
-                if (Gender == GENDER_MALE)
-                    return 10;
-
-                return 9;
-            }
-            case RACE_GOBLIN:
-            {
-                if (Gender == GENDER_MALE)
-                    return 10;
-
-                return 10;
             }
         }
     }
@@ -1806,10 +1413,6 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
         switch (Race)
         {
             case RACE_HUMAN:
-            case RACE_VRYKUL:
-            case RACE_GILNEAN:
-            case RACE_KULTIRAN:
-            case RACE_THINHUMAN:
             {
                 if (Gender == GENDER_MALE)
                     return 5;
@@ -1817,9 +1420,6 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 6;
             }
             case RACE_DWARF:
-            case RACE_DARKIRONDWARF:
-            case RACE_HORDEEARTHEN:
-            case RACE_ALLIANCEEARTHEN:
             {
                 if (Gender == GENDER_MALE)
                     return 6;
@@ -1834,7 +1434,6 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 4;
             }
             case RACE_GNOME:
-            case RACE_MECHAGNOME:
             {
                 if (Gender == GENDER_MALE)
                     return 5;
@@ -1842,9 +1441,6 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 3;
             }
             case RACE_ORC:
-            case RACE_FELORC:
-            case RACE_MAGHARORC:
-            case RACE_OGRE:
             {
                 if (Gender == GENDER_MALE)
                     return 5;
@@ -1852,12 +1448,6 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 5;
             }
             case RACE_TAUREN:
-            case RACE_TAUNKA:
-            case RACE_PANDAREN:
-            case RACE_ALLIANCEPANDAREN:
-            case RACE_HORDEPANDAREN:
-            case RACE_HIGHMOUNTAINTAUREN:
-            case RACE_VULPERA:
             {
                 if (Gender == GENDER_MALE)
                     return 4;
@@ -1865,9 +1455,6 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 3;
             }
             case RACE_TROLL:
-            case RACE_FORESTTROLL:
-            case RACE_ICETROLL:
-            case RACE_ZANDALARITROLL:
             {
                 if (Gender == GENDER_MALE)
                     return 5;
@@ -1875,27 +1462,11 @@ uint32 EmoteActionBase::GetNumberOfEmoteVariants(TextEmotes emote, uint8 Race, u
                 return 4;
             }
             case RACE_UNDEAD_PLAYER:
-            case RACE_SKELETON:
-            case RACE_NORTHRENDSKELETON:
             {
                 if (Gender == GENDER_MALE)
                     return 4;
 
                 return 7;
-            }
-            case RACE_WORGEN:
-            {
-                if (Gender == GENDER_MALE)
-                    return 10;
-
-                return 9;
-            }
-            case RACE_GOBLIN:
-            {
-                if (Gender == GENDER_MALE)
-                    return 10;
-
-                return 10;
             }
         }
     }

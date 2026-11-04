@@ -5,6 +5,7 @@
  */
 
 #include "PlayerbotFactory.h"
+#include "BotRaceTemplates.h"
 #include "PlayerbotsDatabase.h"
 #include "AccountMgr.h"
 #include "AiFactory.h"
@@ -32,6 +33,7 @@
 #include "PlayerbotSpellRepository.h"
 #include "Playerbots.h"
 #include "QuestDef.h"
+#include "RaceMgr.h"
 #include "RandomItemMgr.h"
 #include "RandomPlayerbotFactory.h"
 #include "ReputationMgr.h"
@@ -4017,80 +4019,45 @@ void PlayerbotFactory::InitMounts()
     std::map<uint8, std::map<uint32, std::vector<uint32>>> mounts;
     std::vector<uint32> slow, fast, fslow, ffast;
 
-    switch (bot->getRace())
+    switch (sRaceMgr->GetHomeRace(bot->getRace()))
     {
         case RACE_HUMAN:
-        case RACE_VRYKUL:
-        case RACE_PANDAREN:
-        case RACE_ALLIANCEPANDAREN:
-        case RACE_VOIDELF:
-        case RACE_KULTIRAN:
-        case RACE_THINHUMAN:
-        case RACE_HIGHELF:
-        case RACE_ALLIANCEDRACTHYR:
             slow = {470, 6648, 458, 472};
             fast = {23228, 23227, 23229};
             break;
         case RACE_ORC:
-        case RACE_GOBLIN:
-        case RACE_FELORC:
-        case RACE_MAGHARORC:
-        case RACE_OGRE:
-        case RACE_HORDEDRACTHYR:
-        case RACE_HORDEEARTHEN:
             slow = {6654, 6653, 580};
             fast = {23250, 23252, 23251};
             break;
         case RACE_DWARF:
-        case RACE_TUSKARR:
-        case RACE_DARKIRONDWARF:
-        case RACE_ALLIANCEEARTHEN:
             slow = {6899, 6777, 6898};
             fast = {23238, 23239, 23240};
             break;
         case RACE_NIGHTELF:
-        case RACE_WORGEN:
-        case RACE_GILNEAN:
             slow = {10789, 8394, 10793};
             fast = {23219, 23220, 63637};
             break;
         case RACE_UNDEAD_PLAYER:
-        case RACE_SKELETON:
-        case RACE_NORTHRENDSKELETON:
-        case RACE_DARKFALLEN:
             slow = {17463, 17464, 17462};
             fast = {17465, 23246, 66846};
             break;
         case RACE_TAUREN:
-        case RACE_TAUNKA:
-        case RACE_HORDEPANDAREN:
-        case RACE_HIGHMOUNTAINTAUREN:
-        case RACE_VULPERA:
             slow = {18990, 18989, 64657};
             fast = {23249, 23248, 23247};
             break;
         case RACE_GNOME:
-        case RACE_MECHAGNOME:
             slow = {10969, 17453, 10873, 17454};
             fast = {23225, 23223, 23222};
             break;
         case RACE_TROLL:
-        case RACE_FORESTTROLL:
-        case RACE_ICETROLL:
-        case RACE_ZANDALARITROLL:
-        case RACE_MURLOC:
             slow = {10796, 10799, 8395};
             fast = {23241, 23242, 23243};
             break;
         case RACE_DRAENEI:
-        case RACE_BROKEN:
-        case RACE_LIGHTFORGEDDRAENEI:
             slow = {34406, 35711, 35710};
             fast = {35713, 35712, 35714};
             break;
         case RACE_BLOODELF:
-        case RACE_NAGA:
-        case RACE_NIGHTBORNE:
             slow = {33660, 35020, 35022, 35018};
             fast = {35025, 35025, 35027};
             break;
@@ -4107,71 +4074,9 @@ void PlayerbotFactory::InitMounts()
             }
     }
 
-    // Races with mounts of their own. Most come from optional modpaks, so only the spells this server has are used,
-    // sorted by their mounted speed: they replace the mounts above of the same speed, and a speed the race has no
-    // mount of keeps those of the stock race whose start area it shares.
-    std::vector<uint32> raceMounts;
-    switch (bot->getRace())
-    {
-        case RACE_GOBLIN:
-            raceMounts = {87090, 87091}; // Goblin Trike, Goblin Turbo-Trike
-            break;
-        case RACE_WORGEN:
-        case RACE_GILNEAN:
-            raceMounts = {103195, 103196}; // Mountain Horse, Swift Mountain Horse
-            break;
-        case RACE_PANDAREN:
-        case RACE_ALLIANCEPANDAREN:
-        case RACE_HORDEPANDAREN:
-            raceMounts = {127287, 127289, 120395, 127286}; // Dragon Turtles
-            break;
-        case RACE_NIGHTBORNE:
-            raceMounts = {258845}; // Nightborne Manasaber
-            break;
-        case RACE_HIGHMOUNTAINTAUREN:
-            raceMounts = {258060}; // Highmountain Thunderhoof
-            break;
-        case RACE_VOIDELF:
-            raceMounts = {259202}; // Starcursed Voidstrider
-            break;
-        case RACE_LIGHTFORGEDDRAENEI:
-            raceMounts = {258022, 254258, 254259, 254069}; // Lightforged, Blessed, Avenging, Glorious Felcrusher
-            break;
-        case RACE_ZANDALARITROLL:
-            raceMounts = {263707, 279474}; // Zandalari Direhorn, Palehide Direhorn
-            break;
-        case RACE_KULTIRAN:
-            raceMounts = {282682}; // Kul Tiran Charger
-            break;
-        case RACE_DARKIRONDWARF:
-            raceMounts = {271646}; // Dark Iron Core Hound
-            break;
-        case RACE_VULPERA:
-            raceMounts = {306423, 306424}; // Caravan Hyena
-            break;
-        case RACE_MAGHARORC:
-            raceMounts = {267274}; // Mag'har Direwolf
-            break;
-        case RACE_MECHAGNOME:
-            raceMounts = {305592}; // Mechagon Mechanostrider
-            break;
-        case RACE_OGRE:
-            raceMounts = {18990, 18989, 64657, 23249, 23248, 23247}; // Tauren kodos: ogres are big
-            break;
-        case RACE_ALLIANCEDRACTHYR:
-        case RACE_HORDEDRACTHYR:
-            raceMounts = {394216, 394218, 394220, 394219, 384963, 385134, 385115}; // Vorquins
-            break;
-        case RACE_HORDEEARTHEN:
-        case RACE_ALLIANCEEARTHEN:
-            raceMounts = {449415}; // Slatestone Ramolith
-            break;
-        default:
-            break;
-    }
-
+    // WHE: a race's own mounts replace its home race's, by speed. Spells the DBCs lack are skipped.
     std::vector<uint32> raceSlow, raceFast;
-    for (uint32 spell : raceMounts)
+    for (uint32 spell : BotRaceTemplates::GetMounts(bot->getRace()))
     {
         SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spell);
         if (!spellInfo)

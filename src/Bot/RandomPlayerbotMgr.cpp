@@ -1788,7 +1788,7 @@ void RandomPlayerbotMgr::PrepareAddclassCache()
                     Field* fields = results->Fetch();
                     ObjectGuid guid = ObjectGuid(HighGuid::Player, fields[0].Get<uint32>());
                     uint32 race = fields[1].Get<uint32>();
-                    bool isAlliance = IsAlliance(race);
+                    bool isAlliance = Player::TeamIdForRace(race) == TEAM_ALLIANCE;
                     addclassCache[GetTeamClassIdx(isAlliance, claz)].insert(guid);
                     collected++;
                 } while (results->NextRow());
