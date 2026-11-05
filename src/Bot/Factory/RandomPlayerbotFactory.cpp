@@ -746,6 +746,10 @@ void RandomPlayerbotFactory::CreateRandomBots()
             if (!((1 << (cls - 1)) & CLASSMASK_ALL_PLAYABLE) || !sChrClassesStore.LookupEntry(cls))
                 continue;
 
+            // Custom: WHE F-100, no bot AI knows what to do with a class that has every class's spells
+            if (cls == CLASS_HERO)
+                continue;
+
             // skip disabled with config classes
             if ((1 << (cls - 1)) & sWorld->getIntConfig(CONFIG_CHARACTER_CREATING_DISABLED_CLASSMASK))
                 continue;
